@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<!-- Single-file expander for cmpcturl.com shortened links. -->
+	<title>Cmpcturl Link Paster</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+	
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Catamaran">
+	<style>
+		body { font-family:'Catamaran', sans-serif; margin:0; } 
+		a { color:#68f; text-decoration:underline; }
+
+		.linksList { margin:20px 0 50px; padding:0 10px 0 20px; }
+		.linksList li { margin-top:10px; background-color:#fff; border-radius:5px; xborder:dashed 1px #888; padding:6px 12px; xoverflow:hidden; }
+
+	</style>
+	
+	<script>
+		"use strict";
+
+		
+	</script>
+	
+</head>
+
+<body>
+
+
+
+<div class="">
+	<div style="margin:8px;">
+		Paste a shortened link, or any text containing shortened links:
+		<div class="" style="margin-top:10px;">
+			<textarea class="jsInputText" style="width:350px; height:70px; margin:5px; xborder:2px dashed #888;" placeholder="Paste link or text here"></textarea>
+			<!--<input type="text" class="jsInputText" style="xmargin:5px; padding:15px 5px; width:66%;" placeholder="Paste any text here"/>-->
+			<!--<div class="inlineBtn jsDetectLinkBtn">Go &rarr;</div>-->
+			<button class="jsDetectLinkBtn">Go &rarr;</button>
+		</div>
+	</div>
+	
+	<div class="jsLinksPnl linksPnl" style="display:none; margin-top:20px; padding:20px 8px; background-color:#eee;">
+		<span class="jsLinksFound"></span> link(s) found...
+		
+		<ol class="jsLinksList linksList">
+			<li><a class="" href='http://example.com/'>http://example.com/</a></li>
+		</ol>
+	</div>
+</div>
+
+
+<!--<script src="js/blBaseConverter.js"></script>
+<script src="js/alg_zero2.js"></script>-->
+<script><!-- src="js/blBaseConverter.js" -->
+	
+// This file translated (to JS) from blBaseConvert01a.php.
+function blBaseConverter() {
+	this.test = "test";
+}
+
+
+// origianlly translated from: https://www.codeproject.com/Articles/16035/Base-Conversion-of-Very-Long-Positive-Integers
+	//convert a positive integer in base:from to another base (allowable bases from 2 to N)
+	//the number can be any number of digits long
+	//input and output are arrays of int digits.
+	// e.g. call(["2", "5", "5"], 10, 16) ==> ["15", "15"]. ("255" in base10 is "FF" in base16.)
+	// e.g. call(["15", "15"], 16, 10) ==> ["2", "5", "5"]. ("FF" in base16 is "255" in base10.)
+blBaseConverter.convert_intArInOut = function($inAr, $baseFrom, $baseTo) {
+	if ((typeof $inAr) !== "object" || !$inAr.length) { throw ("Error: inAr must be an array."); }
+	if ((typeof $baseFrom) !== "number") { throw ("Error: baseFrom must be a number."); }
+	if ((typeof $baseTo) !== "number") { throw ("Error: baseTo must be a number."); }
+	
+	//Return error if input is empty
+	if ($inAr.length == 0) {
+		throw ("Error: Nothing in Input String");
+	}
+	
+	$inLen = $inAr.length;
+	//$fs = new SplFixedArray($inLen); // fixed integer array.
+	//$fs = SplFixedArray::fromArray(array_reverse($inAr));
+	$fs = $inAr.slice().reverse(); // slice() to make a copy.
+	Object.seal($fs); // now a is a fixed-size array. (faster, probably?)
+
+	//check the input for digits that exceed the allowable for base:$baseFrom
+	//foreach ($fs as $i)
+	for ($i=0; $i<$fs.length; $i++) { //for each input digit
+		if ((typeof $fs[$i]) !== "number") { throw ("Error: an inAr element not a number."); }
+		if ($fs[$i] >= $baseFrom) { throw ("Error: Not a valid number for this input base"); }
+	}
+	
+	//find how many digits the output needs
+	$outLen = $inLen * (Math.floor($baseFrom / $baseTo)+1); // operator precedence!!???????????
+	// array init from https://stackoverflow.com/a/44853951
+	// (TODO: object.seal?)
+	$ts = Object.seal((new Array($outLen+10)).fill(0)); //assign accumulation array
+	$cums = Object.seal($ts.slice()); //assign the result array
+	$ts[0] = 1; //initialize array with number 1 
+
+	//evaluate the output
+	for ($i=0; $i<$inLen; $i++) { //for each input digit
+		for ($j=0; $j<$outLen; $j++) { //add the input digit 
+			// times (base:$baseTo $baseFrom^i) to the output cumulator
+			$cums[$j] = $cums[$j] + ($ts[$j] * $fs[$i]);
+			$temp = $cums[$j];
+			$rem = 0;
+			$ip = $j;
+			do { // fix up any remainders in base:$baseTo
+				$rem = Math.floor($temp / $baseTo);
+				$cums[$ip] = $temp-$rem*$baseTo; $ip++;
+				$cums[$ip] = $cums[$ip] + $rem;
+				$temp = $cums[$ip];
+			}
+			while ($temp >= $baseTo);
+		}
+		
+		//calculate the next power $baseFrom^i) in base:$baseTo format
+		for ($j=0; $j<$outLen; $j++) {
+			$ts[$j] = $ts[$j] * $baseFrom;
+		} 
+		for($j=0;$j<$outLen;$j++) { //check for any remainders
+			$temp = $ts[$j];
+			$rem = 0;
+			$ip = $j;
+			do { //fix up any remainders
+				$rem = Math.floor($temp / $baseTo);
+				$ts[$ip] = $temp - $rem * $baseTo; $ip++;
+				$ts[$ip] = $ts[$ip] + $rem;
+				$temp = $ts[$ip];
+			}
+			while ($temp >= $baseTo);
+		}
+	}
+	//console.log("$cums:"); console.log($cums);
+	//console.log("$ts:"); console.log($ts);
+	
+
+	//convert the output to string format (digits 0,$baseTo-1 converted to 0-Z characters) 
+	$outAr = []; //initialize output
+	$first = false; //leading zero flag
+	for ($i=$outLen; $i>=0; $i--) {
+		if ($cums[$i] != 0) { $first = true; }
+		if (!$first) { continue; }
+		$outAr.push($cums[$i]);
+	}
+	if ($outAr.length == 0) { return [0]; } //input was zero, return 0
+	return $outAr; //return the converted string
+}</script>
+<script><!-- src="js/alg_zero2.js" -->
+	
+// This file translated (to JS) from blBaseConvert01a.php.
+function alg_zero2() {
+	this.test = "test";
+	this._test = "test";
+	
+	//this._EMOJI_VAR = this._chrByHexCode("FE0F"); // "Standardized variant - emoji"
+	//this._TEXT_VAR = this._chrByHexCode("FE0E"); // "Standardized variant - text"
+	//this._FITZ_12 = this._chrByHexCode("1F3FB"); // "EMOJI MODIFIER FITZPATRICK 1-2"
+	//this._FITZ_3 = this._chrByHexCode("1F3FC");
+	//this._FITZ_4 = this._chrByHexCode("1F3FD");
+	//this._FITZ_5 = this._chrByHexCode("1F3FE");
+	//this._FITZ_6 = this._chrByHexCode("1F3FF");
+
+	this._okUrlChars = ":/?#[]@!$&'()*+,;=%abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.~".split(""); // The characters allowed in a url.
+	
+	// Assemble reference grapheme list. (encStr "alphabet".)
+	// Note: pasting a link containting 108 sequential FE0F/FE0E (EMOJI_VAR/TEXT_VAR) results in FB "Message Failed // This message contains content that has been blocked by our security systems."
+	//   - 108 sequential 2062/2064 (inisible space/plus) is FB-OK!  (Tho not twitter nor hangouts/desktop).
+	var ab1 = this._chrByHexCode("2060"); // "WORD JOINER"
+	var ab2 = this._chrByHexCode("2061"); // "FUNCTION APPLICATION"
+	var ab3 = this._chrByHexCode("2062"); // "INVISIBLE TIMES"
+	var ab4 = this._chrByHexCode("2064"); // "INVISIBLE PLUS"
+	
+	this._abetGmAr = [ab1, ab2, ab3, ab4];
+	//this._abetGmAr.push(this._chrByHexCode("2060")); // "WORD JOINER"
+	//this._abetGmAr.push(this._chrByHexCode("2061")); // "FUNCTION APPLICATION"
+	//this._abetGmAr.push(this._chrByHexCode("2062")); // "INVISIBLE TIMES"
+	//this._abetGmAr.push(this._chrByHexCode("2064")); // "INVISIBLE PLUS"
+	
+	var prefix1 = [ab1, ab1, ab1, ab2].join(""); // Original used in 0url-v1 (url-rewrite method)
+	var prefix2 = [ab1, ab2, ab3, ab4, ab1, ab2, ab3, ab4].join(""); // Intermediate, not widely used.
+	var prefix3 = [ab3, ab3, ab3, ab3, ab4, ab4, ab4, ab3, ab2, ab1, ab2, ab2, ab1, ab1, ab1, ab3, ab2, ab3, ab2, ab3, ab3, ab2, ab2, ab4, ab2, ab3, ab3, ab2, ab1, ab1, ab2, ab4].join(""); // 32-char "fingerprint", randomly generated.
+	// prefixes - first element is used by default for encoding.
+	this._prefixes = [prefix3, prefix2, prefix1, "zero-", "zero.", "devzero"];
+	this.alg_prefix = this._prefixes[0];
+	
+	// Base ("letters" in alphabet) of source/decoded url (84), and encodedStr (4)
+	this._baseDecoded = this._okUrlChars.length; // 84
+	this._baseEncoded = this._abetGmAr.length; // 4
+}
+
+
+alg_zero2.prototype._chrByHexCode = function($hexCode) {
+	return String.fromCharCode(parseInt($hexCode, 16));
+}
+
+// Get integer array from str (positions of each str character in $alphabet).
+alg_zero2.prototype._intArFromStr = function(inStr, srcAlphabet) {
+	var outIntAr = [];
+	for ($i=0; $i<inStr.length; $i++) {
+		var pos = srcAlphabet.indexOf(inStr.charAt($i));
+		srcAlphabet.indexOf();
+		if (pos === false) {
+			throw new Exception("invalid url character(1). '" + inStr.charAt($i) + "'");
+		}
+		outIntAr.push(pos);
+	}
+	return outIntAr;
+}
+// Get string from integer array (uses letters from $alphabet at positions indicated in array).
+alg_zero2.prototype._strFromIntAr = function(inIntAr, srcAlphabet, $separator="") {
+	var $outputStr = "";
+	for ($i=0; $i<inIntAr.length; $i++) {
+		if ($separator != "" && $i > 0) { $outputStr += $separator; }
+		$outputStr += srcAlphabet[inIntAr[$i]];
+	}
+	return $outputStr;
+}
+
+// Return encStr with prefix trimmed.  False if prefix not found.
+alg_zero2.prototype._trimPrefix = function(encStr) {
+	var outStr = "";
+	for (var i=0; i<this._prefixes.length; i++) {
+		if (encStr.startsWith(this._prefixes[i])) {
+			return encStr.substring(this._prefixes[i].length); // Trim prefix.
+		}
+	}
+	return false;
+}
+// Return encStr with suffix trimmed.
+alg_zero2.prototype._trimSuffix = function(encStr) {
+	// Zero2 urls can have trailing (vanity) characters that should be ignored.
+	// Check for suffix (any trailing characters that are not in encAlphabet), and remove it.
+	var suffixStart = encStr.length;
+	for (var i=0; i<encStr.length; i++) {
+		if (this._abetGmAr.indexOf(encStr.charAt(i)) == -1) {
+			suffixStart = i;
+			break;
+		}
+	}
+	var outStr = encStr.slice(0, suffixStart); // Remove suffix.
+	return outStr;
+}
+
+
+
+alg_zero2.prototype.findLinksInText = function(textStr) {
+	var outAr = [];
+	var i = 0;
+	var remaining = textStr;
+	//while ((encStrStart = remaining.indexOf("#" + this._prefixes[0]) + "#".length) > 0 && i<1000) {
+	while ((encStrStart = remaining.indexOf(this._prefixes[0])) > 0 && i<1000) {
+		i++;
+		if (i > 100) { alert("Quit after finding 100 links."); break; }
+		
+		var encStr = this._trimSuffix(remaining.substring(encStrStart));
+		remaining = remaining.substring(encStr.length); // Next start after found link.
+		
+		var validate = alg.validateEncStr(encStr);
+		if (validate && validate.success) {
+			// Shortened URL.  Decode.
+			var decodedUrl = alg.decodeUrlStr(encStr);
+			outAr.push(decodedUrl);
+		}
+		
+	}
+	
+	return outAr;
+}
+
+
+// Validate encStr (verify it starts with a valid prefix, etc).
+// Returns { success: true }, or { error: "message" }.
+alg_zero2.prototype.validateEncStr = function(encStr) {
+	
+	// Trim prefix & suffix from encStr.  Remaining is encoded URL + [ignored]suffix.
+	var encStr_no_prefix = this._trimPrefix(encStr);
+	
+	// Check that prefix was found.
+	if (encStr_no_prefix === false) {
+		return { error: "Invalid input - no valid prefix found" };
+	}
+	
+	// Check for sane string type.
+	if (!encStr_no_prefix || !encStr_no_prefix.length) {
+		return { error: "Invalid input - missing" };
+	}
+	// Check that first char, at least is in encAlphabet.
+	if (this._abetGmAr.indexOf(encStr_no_prefix.charAt(0)) === -1) {
+		return { error: "Invalid input - invalid characters found" };
+	}
+	
+	return { success: true, encStr_no_prefix: encStr_no_prefix };
+}
+
+// Encodes a source URL.
+alg_zero2.prototype.encodeUrlStr = function(inputUrl, customSuffix) {
+	
+	inputUrl = encodeURI(inputUrl); // urlEncode non-url chars (e.g. spaces, emojis), as a browser would.
+	
+	if (!inputUrl || !inputUrl.length) { this.encodeError = "missing inputUrl."; return false; }
+	if (inputUrl.length > 2000) { this.encodeError = "inputUrl too long (" + inputUrl.length + " of 2000)."; return false; }
+	if (!customSuffix || !customSuffix.length) { this.encodeError = "Invalid suffix"; return false; }
+	
+	var inIntAr = this._intArFromStr(inputUrl, this._okUrlChars);
+	// Encode.
+	var $encodedIntAr = blBaseConverter.convert_intArInOut(inIntAr, this._baseDecoded, this._baseEncoded);
+	
+	//console.log("$encodedIntAr:"); console.log($encodedIntAr);
+	var encodedUrl = this._strFromIntAr($encodedIntAr, this._abetGmAr, "");
+	return this._prefixes[0] + encodedUrl + customSuffix; // Append prefix & suffix.
+}
+
+// Decodes an encStr back into a URL.
+alg_zero2.prototype.decodeUrlStr = function(encodedStr) {
+	
+	var validate = this.validateEncStr(encodedStr);
+	if (!validate || !validate.success || !validate.encStr_no_prefix) {
+		var errorMsg = validate.error ? validate.error : "unknown";
+		
+		console.log("Error(1): " + errorMsg);
+		console.log(validate);
+		return false;
+	}
+	var encStr_no_prefix = validate.encStr_no_prefix;
+	
+	// Trim prefix & suffix from encStr.  Remaining middle is an encoded URL.
+	var encUrl = this._trimSuffix(encStr_no_prefix);
+	
+	// Decode.
+	var encIntAr = this._intArFromStr(encUrl, this._abetGmAr);
+	var decodedIntAr = blBaseConverter.convert_intArInOut(encIntAr, this._baseEncoded, this._baseDecoded);
+
+	var decodedUrl = this._strFromIntAr(decodedIntAr, this._okUrlChars, "");
+	return decodedUrl;
+}
+</script>
+
+<script>
+	"use strict";
+
+
+	function UpdateFoundList(urls) {
+		var el_linksPnl = document.querySelector(".jsLinksPnl");
+		var el_linksFound = document.querySelector(".jsLinksFound");
+		var el_linksList = document.querySelector(".jsLinksList");
+
+		el_linksPnl.style.display = "block";
+		el_linksFound.innerHTML = urls.length;
+		
+		var linksHtml = "";
+		for (var i=0; i<urls.length; i++) {
+			var li = document.createElement('li');
+			var a = document.createElement('a');
+			a.href = urls[i];
+			a.innerHTML = urls[i];
+			li.innerHTML = a.outerHTML;
+			linksHtml += " " + li.outerHTML;
+		}
+		el_linksList.innerHTML = linksHtml;
+	}
+
+	var alg = new alg_zero2();
+	var el_detectLinkBtn = document.querySelector(".jsDetectLinkBtn");
+	var el_inputText = document.querySelector(".jsInputText");
+
+	// Check for shortened url.
+	window.addEventListener('hashchange', function() {
+		//processHash();
+	}, false);
+	// Support adding the #-encoded-url right to this page.
+	if (location.hash) {
+		el_inputText.value = decodeURIComponent(location.hash);
+		//el_detectLinkBtn.click();
+	}
+
+
+	// Find links in text.
+	el_detectLinkBtn.addEventListener('click', function() {
+		var txt = el_inputText.value;
+		var urls = alg.findLinksInText(txt);
+		UpdateFoundList(urls);
+	}, false);
+	
+</script>
+
+
+
+</body>
+</html>
