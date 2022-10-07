@@ -1,10 +1,13 @@
 # cmpcturl.com
 
-This public repository is insurance that shortened links from cmpcturl.com will be un-shortenable forever.
+This repository is insurance that shortened links from cmpcturl.com will be un-shortenable forever.
 
+## About "link_unshortener.html"
 
-## Instructions for use
+"link_unshortener.html" is a single-file utility to un-shorten links created in cmpturl.com.  It can be run from your own computer, or from anywhere.
 
-- Save file "link_paster.html" to your computer, and open it in a web browser.
-- Paste a shortened link in the text field, and your link will be un-shortened. 
+## Usage instructions
+
+- Save file "link_unshortener.html" to your computer, and open it in a web browser.
+- Paste a shortened link in the text field, and your link will be un-shortened.
 
